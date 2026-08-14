@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Velha Suprema Online</title>
+  <title>Velha Suprema — por código</title>
   <style>
     :root{
       --ink:#171a23;
       --ink-soft:#232838;
-      --ink-soft2:#2b3142;
       --paper:#f3ede0;
       --paper-line:#d8cfb8;
       --amber:#e2a13d;
@@ -40,7 +39,7 @@
       display:flex;
       flex-direction:column;
       align-items:center;
-      gap:18px;
+      gap:16px;
     }
     .title{
       font-family:Georgia,'Times New Roman',serif;
@@ -48,7 +47,6 @@
       letter-spacing:0.5px;
       margin:0;
       text-align:center;
-      color:var(--paper);
     }
     .title em{ font-style:normal; color:var(--amber); }
     .subtitle{
@@ -60,49 +58,73 @@
       color:var(--amber-dim);
     }
 
-    /* ---- Lobby ---- */
-    .card{
+    .setup-card{
       width:100%;
-      max-width:420px;
       background:var(--ink-soft);
       border:1px solid #313749;
       border-radius:6px;
-      padding:24px;
+      padding:18px;
       display:flex;
       flex-direction:column;
-      gap:16px;
+      gap:12px;
     }
-    .field{
+    .setup-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    .role-btn{
+      flex:1;
+      min-width:120px;
+      background:var(--ink);
+      border:1px solid #3a4155;
+      color:var(--paper);
+      padding:12px;
+      border-radius:4px;
+      font-family:inherit;
+      font-size:13px;
+      cursor:pointer;
+      text-align:center;
+    }
+    .role-btn.selected.x{ border-color:var(--x-color); background:rgba(77,126,168,0.15); }
+    .role-btn.selected.o{ border-color:var(--o-color); background:rgba(181,72,79,0.15); }
+    .setup-hint{ font-size:11px; color:var(--muted); text-align:center; line-height:1.6; }
+
+    .exchange-card{
+      width:100%;
+      background:var(--ink-soft);
+      border:1px solid #313749;
+      border-radius:6px;
+      padding:16px;
       display:flex;
       flex-direction:column;
-      gap:6px;
+      gap:10px;
     }
-    .field label{
-      font-size:11px;
+    .exchange-label{
+      font-size:10px;
       letter-spacing:1.5px;
       text-transform:uppercase;
       color:var(--muted);
     }
-    .field input{
+    textarea{
+      width:100%;
       background:var(--ink);
       border:1px solid #3a4155;
       color:var(--paper);
-      padding:10px 12px;
+      padding:10px;
       border-radius:4px;
       font-family:inherit;
-      font-size:15px;
-      letter-spacing:1px;
+      font-size:12px;
+      resize:vertical;
+      min-height:56px;
     }
-    .field input:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
+    textarea:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
+    .row{ display:flex; gap:8px; flex-wrap:wrap; }
     .btn{
       background:var(--amber);
       color:var(--ink);
       border:none;
-      padding:11px 14px;
+      padding:10px 14px;
       border-radius:4px;
       font-family:inherit;
       font-weight:bold;
-      font-size:13px;
+      font-size:12px;
       letter-spacing:1px;
       text-transform:uppercase;
       cursor:pointer;
@@ -110,71 +132,12 @@
     }
     .btn:hover{ filter:brightness(1.08); }
     .btn:disabled{ opacity:0.4; cursor:default; }
-    .btn.ghost{
-      background:transparent;
-      color:var(--amber);
-      border:1px solid var(--amber-dim);
-    }
+    .btn.ghost{ background:transparent; color:var(--amber); border:1px solid var(--amber-dim); }
     .btn.ghost:hover{ background:var(--amber); color:var(--ink); }
-    .btn.small{ padding:7px 10px; font-size:11px; }
-    .lobby-error{
-      font-size:12px;
-      color:var(--o-color);
-      text-align:center;
-    }
-    .lobby-hint{
-      font-size:11px;
-      color:var(--muted);
-      text-align:center;
-      line-height:1.6;
-    }
+    .msg{ font-size:12px; text-align:center; min-height:16px; }
+    .msg.err{ color:var(--o-color); }
+    .msg.ok{ color:#6fae7a; }
 
-    /* ---- Waiting room ---- */
-    .room-code-display{
-      text-align:center;
-      font-family:Georgia,serif;
-      font-size:32px;
-      letter-spacing:6px;
-      color:var(--amber);
-    }
-    .role-row{
-      display:flex;
-      gap:10px;
-    }
-    .role-slot{
-      flex:1;
-      border:1px solid #3a4155;
-      border-radius:4px;
-      padding:12px;
-      text-align:center;
-      font-size:13px;
-    }
-    .role-slot .role-label{
-      font-size:10px;
-      letter-spacing:1.5px;
-      text-transform:uppercase;
-      color:var(--muted);
-      margin-bottom:6px;
-    }
-    .role-slot.x{ border-color:var(--x-color); }
-    .role-slot.o{ border-color:var(--o-color); }
-    .role-slot.mine{ background:rgba(226,161,61,0.08); }
-    .waiting-msg{
-      text-align:center;
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    /* ---- Game ---- */
-    .top-bar{
-      width:100%;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      font-size:11px;
-      color:var(--muted);
-    }
-    .top-bar b{ color:var(--amber); letter-spacing:2px; }
     .status-bar{
       width:100%;
       display:flex;
@@ -200,7 +163,6 @@
     }
     .turn-chip.x{background:rgba(77,126,168,0.2); color:var(--x-color); border:1px solid var(--x-color);}
     .turn-chip.o{background:rgba(181,72,79,0.2); color:var(--o-color); border:1px solid var(--o-color);}
-    .status-actions{ display:flex; gap:8px; }
 
     .mega-board{
       width:100%;
@@ -225,9 +187,7 @@
       border-radius:4px;
       transition:box-shadow .2s ease;
     }
-    .mini-board.active{
-      box-shadow:0 0 0 3px var(--amber), 0 0 14px rgba(226,161,61,0.35);
-    }
+    .mini-board.active{ box-shadow:0 0 0 3px var(--amber), 0 0 14px rgba(226,161,61,0.35); }
     .cell{
       background:var(--paper);
       border:none;
@@ -250,87 +210,76 @@
     .cell.o{ color:var(--o-color); }
 
     .mini-overlay{
-      position:absolute;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-family:Georgia,serif;
-      font-weight:bold;
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      font-family:Georgia,serif; font-weight:bold;
       font-size:clamp(38px,10vw,64px);
-      border-radius:4px;
-      pointer-events:none;
+      border-radius:4px; pointer-events:none;
     }
     .mini-overlay.x{ background:var(--won-x); color:var(--paper); }
     .mini-overlay.o{ background:var(--won-o); color:var(--paper); }
     .mini-overlay.d{ background:var(--draw); color:var(--paper); font-size:14px; letter-spacing:1px; text-transform:uppercase; }
 
-    .legend{
-      font-size:11px;
-      color:var(--muted);
-      text-align:center;
-      line-height:1.6;
-      max-width:520px;
-    }
+    .legend{ font-size:11px; color:var(--muted); text-align:center; line-height:1.6; max-width:520px; }
     .legend b{ color:var(--amber-dim); }
-
     .hidden{ display:none !important; }
-
-    @media (prefers-reduced-motion: reduce){
-      .cell, .mini-board{ transition:none; }
-    }
+    @media (prefers-reduced-motion: reduce){ .cell, .mini-board{ transition:none; } }
   </style>
 </head>
 <body>
 <div class="wrap">
   <h1 class="title">Velha <em>Suprema</em></h1>
-  <p class="subtitle">jogue online com uma sala compartilhada</p>
+  <p class="subtitle">jogue por código de partida</p>
 
-  <!-- LOBBY SCREEN -->
-  <div class="card" id="lobbyScreen">
-    <div class="field">
-      <label for="nameInput">Seu nome</label>
-      <input id="nameInput" type="text" maxlength="16" placeholder="ex: Ana">
+  <!-- SETUP -->
+  <div class="setup-card" id="setupCard">
+    <div class="exchange-label">quem começa jogando</div>
+    <div class="setup-row">
+      <button class="role-btn x selected" id="roleXBtn" data-role="X">Eu sou X (começo)</button>
+      <button class="role-btn o" id="roleOBtn" data-role="O">Eu sou O (espero a jogada)</button>
     </div>
-    <div class="field">
-      <label for="roomInput">Código da sala</label>
-      <input id="roomInput" type="text" maxlength="8" placeholder="ex: LARANJA">
-    </div>
-    <button class="btn" id="joinBtn">Entrar na sala</button>
-    <p class="lobby-error hidden" id="lobbyError"></p>
-    <p class="lobby-hint">Combine um código qualquer com a outra pessoa (ex: "GATO23") e digite o mesmo código dos dois lados para cair na mesma sala.</p>
+    <p class="setup-hint">
+      Combine com a outra pessoa quem é X e quem é O antes de começar — <b style="color:var(--amber-dim)">um de vocês escolhe "Eu sou X"</b> e o outro escolhe "Eu sou O" no jogo dele.
+      Quem for X faz a primeira jogada e gera o primeiro código para enviar.
+    </p>
+    <button class="btn" id="startBtn">Começar</button>
   </div>
 
-  <!-- WAITING SCREEN -->
-  <div class="card hidden" id="waitingScreen">
-    <div class="room-code-display" id="waitingRoomCode"></div>
-    <div class="role-row" id="roleRow"></div>
-    <p class="waiting-msg" id="waitingMsg">aguardando o segundo jogador entrar...</p>
-    <button class="btn ghost small" id="leaveFromWaitBtn">Sair da sala</button>
-  </div>
-
-  <!-- GAME SCREEN -->
-  <div class="wrap" id="gameScreen" style="width:100%;padding:0;gap:14px;" hidden>
-    <div class="top-bar">
-      <span>sala: <b id="gameRoomCode"></b></span>
-      <button class="btn ghost small" id="leaveBtn">Sair</button>
-    </div>
+  <!-- GAME -->
+  <div class="wrap" id="gameArea" style="width:100%;padding:0;gap:14px;" hidden>
 
     <div class="status-bar">
       <div class="status-text" id="statusText">
         <span class="turn-chip x">X</span>
-        <span id="statusMsg">carregando...</span>
+        <span id="statusMsg"></span>
       </div>
-      <div class="status-actions">
-        <button class="btn ghost small" id="resetBtn">Reiniciar</button>
-      </div>
+      <button class="btn ghost" id="resetBtn" style="padding:6px 10px;font-size:11px;">Reiniciar</button>
     </div>
 
     <div class="mega-board" id="megaBoard" role="grid" aria-label="Tabuleiro da velha suprema"></div>
 
+    <div class="exchange-card">
+      <div class="exchange-label" id="outLabel">Envie este código para a outra pessoa</div>
+      <textarea id="outCode" readonly rows="2"></textarea>
+      <div class="row">
+        <button class="btn" id="copyBtn">Copiar código</button>
+      </div>
+      <div class="msg ok hidden" id="copyMsg">copiado!</div>
+    </div>
+
+    <div class="exchange-card">
+      <div class="exchange-label">Cole aqui o código que você recebeu</div>
+      <textarea id="inCode" rows="2" placeholder="cole o código recebido aqui..."></textarea>
+      <div class="row">
+        <button class="btn ghost" id="loadBtn">Carregar jogada</button>
+      </div>
+      <div class="msg hidden" id="loadMsg"></div>
+    </div>
+
     <p class="legend">
       <b>Regra:</b> a casa escolhida dentro de um quadrante define em qual quadrante o adversário deve jogar em seguida.
       Vença três casas em linha para conquistar um quadrante, e vença três quadrantes em linha para vencer o jogo.
+      Após cada jogada, copie o código gerado e envie para a outra pessoa; quando receber o código dela, cole-o acima para atualizar o tabuleiro.
     </p>
   </div>
 </div>
@@ -343,89 +292,61 @@
       [0,4,8],[2,4,6]
     ];
 
-    const lobbyScreen = document.getElementById('lobbyScreen');
-    const waitingScreen = document.getElementById('waitingScreen');
-    const gameScreen = document.getElementById('gameScreen');
+    const setupCard = document.getElementById('setupCard');
+    const roleXBtn = document.getElementById('roleXBtn');
+    const roleOBtn = document.getElementById('roleOBtn');
+    const startBtn = document.getElementById('startBtn');
 
-    const nameInput = document.getElementById('nameInput');
-    const roomInput = document.getElementById('roomInput');
-    const joinBtn = document.getElementById('joinBtn');
-    const lobbyError = document.getElementById('lobbyError');
-
-    const waitingRoomCode = document.getElementById('waitingRoomCode');
-    const roleRow = document.getElementById('roleRow');
-    const waitingMsg = document.getElementById('waitingMsg');
-    const leaveFromWaitBtn = document.getElementById('leaveFromWaitBtn');
-
-    const gameRoomCode = document.getElementById('gameRoomCode');
-    const leaveBtn = document.getElementById('leaveBtn');
+    const gameArea = document.getElementById('gameArea');
     const statusText = document.getElementById('statusText');
     const statusMsg = document.getElementById('statusMsg');
-    const resetBtn = document.getElementById('resetBtn');
     const megaBoardEl = document.getElementById('megaBoard');
+    const resetBtn = document.getElementById('resetBtn');
 
-    let myId = null;
-    let myName = '';
-    let roomCode = '';
-    let myRole = null; // 'X' | 'O' | null (spectator)
-    let lastSnapshotJSON = null;
-    let pollTimer = null;
+    const outLabel = document.getElementById('outLabel');
+    const outCode = document.getElementById('outCode');
+    const copyBtn = document.getElementById('copyBtn');
+    const copyMsg = document.getElementById('copyMsg');
 
-    function defaultGameState(){
+    const inCode = document.getElementById('inCode');
+    const loadBtn = document.getElementById('loadBtn');
+    const loadMsg = document.getElementById('loadMsg');
+
+    let myRole = 'X';
+    let state = null;
+
+    function defaultState(){
       return {
         boards: Array.from({length:9}, () => Array(9).fill(null)),
         boardWinner: Array(9).fill(null),
         currentPlayer: 'X',
         activeBoard: null,
         gameOver: false,
-        winner: null
+        winner: null,
+        seq: 0
       };
     }
 
-    function defaultRoom(){
-      return {
-        playerX: null, // {id,name}
-        playerO: null,
-        game: defaultGameState(),
-        updatedAt: Date.now()
-      };
+    roleXBtn.addEventListener('click', () => selectRole('X'));
+    roleOBtn.addEventListener('click', () => selectRole('O'));
+
+    function selectRole(role){
+      myRole = role;
+      roleXBtn.classList.toggle('selected', role === 'X');
+      roleOBtn.classList.toggle('selected', role === 'O');
     }
 
-    async function ensureClientId(){
-      try{
-        const res = await window.storage.get('client-id', false);
-        if(res && res.value){ myId = res.value; return; }
-      }catch(e){ /* not found */ }
-      myId = 'p-' + Math.random().toString(36).slice(2,10);
-      try{ await window.storage.set('client-id', myId, false); }catch(e){}
-    }
+    startBtn.addEventListener('click', () => {
+      state = defaultState();
+      setupCard.classList.add('hidden');
+      gameArea.hidden = false;
+      render();
+    });
 
-    let clientReadyPromise = null;
-
-    function withTimeout(promise, ms, label){
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error((label||'operação') + ' demorou demais')), ms))
-      ]);
-    }
-
-    function roomKey(code){ return 'ttt-room:' + code; }
-
-    async function getRoom(code){
-      try{
-        const res = await window.storage.get(roomKey(code), true);
-        if(!res) return null;
-        return JSON.parse(res.value);
-      }catch(e){
-        return null;
-      }
-    }
-
-    async function setRoom(code, roomObj){
-      roomObj.updatedAt = Date.now();
-      await window.storage.set(roomKey(code), JSON.stringify(roomObj), true);
-      return roomObj;
-    }
+    resetBtn.addEventListener('click', () => {
+      state = defaultState();
+      render();
+    });
 
     function checkWinner(cells){
       for(const [a,b,c] of LINES){
@@ -435,162 +356,115 @@
       return null;
     }
 
-    function isBoardOpen(room, idx){ return room.game.boardWinner[idx] === null; }
-    function anyOpenBoard(room){ return room.game.boardWinner.some(w => w === null); }
+    function isBoardOpen(idx){ return state.boardWinner[idx] === null; }
+    function anyOpenBoard(){ return state.boardWinner.some(w => w === null); }
 
-    // ---------- Lobby flow ----------
-    joinBtn.addEventListener('click', async () => {
-      lobbyError.classList.add('hidden');
-      const name = nameInput.value.trim();
-      const code = roomInput.value.trim().toUpperCase();
-      if(!name){ showLobbyError('Digite seu nome.'); return; }
-      if(!code){ showLobbyError('Digite um código de sala.'); return; }
+    function handleCellClick(boardIdx, cellIdx){
+      if(state.gameOver) return;
+      if(myRole !== state.currentPlayer) return;
+      if(state.boardWinner[boardIdx] !== null) return;
+      if(state.boards[boardIdx][cellIdx] !== null) return;
+      if(state.activeBoard !== null && state.activeBoard !== boardIdx) return;
 
-      if(!window.storage){
-        showLobbyError('Armazenamento não disponível neste ambiente. Tente abrir o artifact novamente.');
-        return;
+      state.boards[boardIdx][cellIdx] = state.currentPlayer;
+      const result = checkWinner(state.boards[boardIdx]);
+      if(result) state.boardWinner[boardIdx] = result;
+
+      const megaResult = checkWinner(state.boardWinner.map(w => w === 'D' ? null : w));
+
+      if(megaResult && megaResult !== 'D'){
+        state.gameOver = true;
+        state.winner = megaResult;
+      } else if(megaResult === 'D' || !anyOpenBoard()){
+        state.gameOver = true;
+        state.winner = 'D';
+      } else {
+        state.currentPlayer = state.currentPlayer === 'X' ? 'O' : 'X';
+        state.activeBoard = isBoardOpen(cellIdx) ? cellIdx : null;
       }
+      state.seq += 1;
 
-      myName = name;
-      roomCode = code;
-      joinBtn.disabled = true;
-      joinBtn.textContent = 'Entrando...';
+      render();
+    }
 
+    function encodeState(){
+      const json = JSON.stringify(state);
+      return btoa(unescape(encodeURIComponent(json)));
+    }
+
+    function decodeState(code){
+      const json = decodeURIComponent(escape(atob(code.trim())));
+      const obj = JSON.parse(json);
+      if(!obj || !Array.isArray(obj.boards) || obj.boards.length !== 9) throw new Error('formato inválido');
+      return obj;
+    }
+
+    copyBtn.addEventListener('click', async () => {
       try{
-        if(clientReadyPromise) await withTimeout(clientReadyPromise, 6000, 'identificação');
-        if(!myId) throw new Error('não foi possível identificar este dispositivo');
-
-        let room = await withTimeout(getRoom(roomCode), 6000, 'busca da sala');
-        if(!room){
-          room = defaultRoom();
-          await withTimeout(setRoom(roomCode, room), 6000, 'criação da sala');
-        }
-
-        // try to claim a seat
-        room = await withTimeout(getRoom(roomCode), 6000, 'busca da sala'); // re-fetch fresh
-        if(!room) throw new Error('sala não encontrada após criação');
-
-        if(room.playerX && room.playerX.id === myId){
-          myRole = 'X';
-        } else if(room.playerO && room.playerO.id === myId){
-          myRole = 'O';
-        } else if(!room.playerX){
-          room.playerX = { id: myId, name: myName };
-          room = await withTimeout(setRoom(roomCode, room), 6000, 'entrada na sala');
-          myRole = 'X';
-        } else if(!room.playerO){
-          room.playerO = { id: myId, name: myName };
-          room = await withTimeout(setRoom(roomCode, room), 6000, 'entrada na sala');
-          myRole = 'O';
-        } else {
-          myRole = null; // spectator, both seats full
-        }
-
-        enterRoom(room);
-      }catch(err){
-        showLobbyError('Não foi possível entrar na sala. Tente novamente. (' + (err && err.message ? err.message : 'erro desconhecido') + ')');
-      }finally{
-        joinBtn.disabled = false;
-        joinBtn.textContent = 'Entrar na sala';
+        await navigator.clipboard.writeText(outCode.value);
+      }catch(e){
+        outCode.select();
+        document.execCommand('copy');
       }
+      copyMsg.classList.remove('hidden');
+      setTimeout(() => copyMsg.classList.add('hidden'), 1500);
     });
 
-    function showLobbyError(msg){
-      lobbyError.textContent = msg;
-      lobbyError.classList.remove('hidden');
-    }
+    loadBtn.addEventListener('click', () => {
+      loadMsg.classList.remove('hidden');
+      loadMsg.className = 'msg';
+      try{
+        const raw = inCode.value.trim();
+        if(!raw){ throw new Error('cole um código antes de carregar'); }
+        const incoming = decodeState(raw);
 
-    leaveFromWaitBtn.addEventListener('click', leaveRoom);
-    leaveBtn.addEventListener('click', leaveRoom);
-
-    function leaveRoom(){
-      if(pollTimer) clearInterval(pollTimer);
-      roomCode = '';
-      myRole = null;
-      lastSnapshotJSON = null;
-      lobbyScreen.classList.remove('hidden');
-      waitingScreen.classList.add('hidden');
-      gameScreen.hidden = true;
-    }
-
-    function enterRoom(room){
-      lobbyScreen.classList.add('hidden');
-      gameRoomCode.textContent = roomCode;
-      waitingRoomCode.textContent = roomCode;
-      startPolling();
-      renderFromRoom(room, true);
-    }
-
-    function startPolling(){
-      if(pollTimer) clearInterval(pollTimer);
-      pollTimer = setInterval(async () => {
-        const room = await getRoom(roomCode);
-        if(!room) return;
-        const snap = JSON.stringify(room);
-        if(snap !== lastSnapshotJSON){
-          renderFromRoom(room, false);
+        if(state && incoming.seq <= state.seq && state.seq > 0){
+          throw new Error('esse código já foi carregado ou é mais antigo que sua partida atual');
         }
-      }, 1300);
-    }
 
-    // ---------- Rendering ----------
-    function renderFromRoom(room, force){
-      lastSnapshotJSON = JSON.stringify(room);
-
-      const bothPresent = room.playerX && room.playerO;
-
-      if(!bothPresent){
-        waitingScreen.classList.remove('hidden');
-        gameScreen.hidden = true;
-        roleRow.innerHTML = '';
-        ['X','O'].forEach(role => {
-          const p = role === 'X' ? room.playerX : room.playerO;
-          const slot = document.createElement('div');
-          slot.className = 'role-slot ' + role.toLowerCase() + (myRole === role ? ' mine' : '');
-          slot.innerHTML = `<div class="role-label">Jogador ${role}</div><div>${p ? escapeHtml(p.name) + (p.id===myId?' (você)':'') : '— aguardando —'}</div>`;
-          roleRow.appendChild(slot);
-        });
-        waitingMsg.textContent = myRole
-                ? 'aguardando o segundo jogador entrar...'
-                : 'sala cheia — você está assistindo como espectador';
-        return;
+        state = incoming;
+        inCode.value = '';
+        loadMsg.textContent = 'jogada carregada!';
+        loadMsg.classList.add('ok');
+        render();
+      }catch(err){
+        loadMsg.textContent = 'código inválido — confira se copiou tudo certinho. (' + err.message + ')';
+        loadMsg.classList.add('err');
       }
+      setTimeout(() => loadMsg.classList.add('hidden'), 3500);
+    });
 
-      waitingScreen.classList.add('hidden');
-      gameScreen.hidden = false;
+    function render(){
+      outCode.value = encodeState();
 
-      renderGame(room);
-    }
-
-    function escapeHtml(s){
-      return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-
-    function renderGame(room){
-      const g = room.game;
       const chip = statusText.querySelector('.turn-chip');
 
-      if(g.gameOver){
-        chip.style.display = g.winner === 'D' ? 'none' : '';
-        if(g.winner && g.winner !== 'D'){
-          chip.className = 'turn-chip ' + g.winner.toLowerCase();
-          chip.textContent = g.winner;
-          const winnerName = g.winner === 'X' ? room.playerX.name : room.playerO.name;
-          statusMsg.textContent = `${winnerName} (${g.winner}) venceu o jogo!`;
-        } else {
+      if(state.gameOver){
+        if(state.winner === 'D'){
+          chip.style.display = 'none';
           statusMsg.textContent = 'empate geral — nenhum jogador venceu';
+        } else {
+          chip.style.display = '';
+          chip.className = 'turn-chip ' + state.winner.toLowerCase();
+          chip.textContent = state.winner;
+          statusMsg.textContent = state.winner === myRole
+                  ? 'você venceu o jogo!'
+                  : `${state.winner} venceu o jogo`;
         }
+        outLabel.textContent = 'Envie o resultado final para a outra pessoa';
       } else {
         chip.style.display = '';
-        chip.className = 'turn-chip ' + g.currentPlayer.toLowerCase();
-        chip.textContent = g.currentPlayer;
-        const currentName = g.currentPlayer === 'X' ? room.playerX.name : room.playerO.name;
-        const isMyTurn = myRole === g.currentPlayer;
-        const who = isMyTurn ? 'sua vez' : `vez de ${currentName}`;
-        if(g.activeBoard === null){
-          statusMsg.textContent = `${who} (${g.currentPlayer}) — jogue em qualquer quadrante`;
+        chip.className = 'turn-chip ' + state.currentPlayer.toLowerCase();
+        chip.textContent = state.currentPlayer;
+        const isMyTurn = myRole === state.currentPlayer;
+        if(isMyTurn){
+          statusMsg.textContent = state.activeBoard === null
+                  ? 'sua vez — jogue em qualquer quadrante'
+                  : `sua vez — jogue no quadrante ${state.activeBoard + 1}`;
+          outLabel.textContent = 'Faça sua jogada abaixo, depois copie e envie este código';
         } else {
-          statusMsg.textContent = `${who} (${g.currentPlayer}) — jogue no quadrante ${g.activeBoard + 1}`;
+          statusMsg.textContent = `aguardando a jogada de ${state.currentPlayer}`;
+          outLabel.textContent = 'Aguarde o código da outra pessoa e cole abaixo';
         }
       }
 
@@ -601,21 +475,21 @@
         miniEl.setAttribute('role','group');
         miniEl.setAttribute('aria-label', `Quadrante ${b+1}`);
 
-        const won = g.boardWinner[b];
-        if(!g.gameOver && won === null && (g.activeBoard === null || g.activeBoard === b)){
+        const won = state.boardWinner[b];
+        if(!state.gameOver && won === null && (state.activeBoard === null || state.activeBoard === b)){
           miniEl.classList.add('active');
         }
 
         for(let c = 0; c < 9; c++){
-          const val = g.boards[b][c];
+          const val = state.boards[b][c];
           const cellEl = document.createElement('button');
           cellEl.className = 'cell' + (val ? ' ' + val.toLowerCase() : '');
           cellEl.textContent = val || '';
           cellEl.setAttribute('aria-label', `Quadrante ${b+1}, casa ${c+1}${val ? ', ' + val : ', vazia'}`);
 
-          const notMyTurn = myRole === null || myRole !== g.currentPlayer;
-          const disabled = g.gameOver || won !== null || val !== null ||
-                  (g.activeBoard !== null && g.activeBoard !== b) || notMyTurn;
+          const notMyTurn = myRole !== state.currentPlayer;
+          const disabled = state.gameOver || won !== null || val !== null ||
+                  (state.activeBoard !== null && state.activeBoard !== b) || notMyTurn;
           cellEl.disabled = disabled;
 
           cellEl.addEventListener('click', () => handleCellClick(b, c));
@@ -637,50 +511,6 @@
         megaBoardEl.appendChild(miniEl);
       }
     }
-
-    // ---------- Gameplay ----------
-    async function handleCellClick(boardIdx, cellIdx){
-      const room = await getRoom(roomCode);
-      if(!room || !room.playerX || !room.playerO) return;
-      const g = room.game;
-
-      if(g.gameOver) return;
-      if(myRole !== g.currentPlayer) return;
-      if(g.boardWinner[boardIdx] !== null) return;
-      if(g.boards[boardIdx][cellIdx] !== null) return;
-      if(g.activeBoard !== null && g.activeBoard !== boardIdx) return;
-
-      g.boards[boardIdx][cellIdx] = g.currentPlayer;
-      const result = checkWinner(g.boards[boardIdx]);
-      if(result) g.boardWinner[boardIdx] = result;
-
-      const megaResult = checkWinner(g.boardWinner.map(w => w === 'D' ? null : w));
-
-      if(megaResult && megaResult !== 'D'){
-        g.gameOver = true;
-        g.winner = megaResult;
-      } else if(megaResult === 'D' || !anyOpenBoard(room)){
-        g.gameOver = true;
-        g.winner = 'D';
-      } else {
-        g.currentPlayer = g.currentPlayer === 'X' ? 'O' : 'X';
-        g.activeBoard = isBoardOpen(room, cellIdx) ? cellIdx : null;
-      }
-
-      const updated = await setRoom(roomCode, room);
-      renderFromRoom(updated, false);
-    }
-
-    resetBtn.addEventListener('click', async () => {
-      const room = await getRoom(roomCode);
-      if(!room) return;
-      room.game = defaultGameState();
-      const updated = await setRoom(roomCode, room);
-      renderFromRoom(updated, false);
-    });
-
-    // ---------- Init ----------
-    clientReadyPromise = ensureClientId();
   })();
 </script>
 </body>
