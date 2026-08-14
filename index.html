@@ -210,7 +210,7 @@
   <!-- SETUP / MULTIPLAYER LOBBY -->
   <div class="setup-card" id="setupCard">
     <div class="exchange-label">Modo de Jogo Online</div>
-    <div id="connectionStatus" class="msg ok">Iniciando rede multiplayer...</div>
+    <div id="connectionStatus" class="msg ok">Iniciando servidor de rede...</div>
 
     <div class="setup-row" style="flex-direction: column;">
       <button class="btn" id="createRoomBtn" disabled>Criar Nova Partida</button>
@@ -291,7 +291,6 @@
       };
     }
 
-    // --- LÓGICA DE REDE (WebRTC com PeerJS) ---
     function generateRoomId() {
       return 'velha-' + Math.random().toString(36).substring(2, 8);
     }
@@ -301,17 +300,25 @@
       const roomIdFromUrl = urlParams.get('room');
 
       if (roomIdFromUrl) {
-        // Entrando em uma sala existente (Jogador O)
+        // Entrando via Link do Amigo (Jogador O)
         myRole = 'O';
-        connectionStatus.textContent = "Conectando ao jogador Host...";
+        connectionStatus.textContent = "Conectando ao servidor de salas...";
+
         peer = new Peer();
 
         peer.on('open', () => {
-          conn = peer.connect(roomIdFromUrl);
+          connectionStatus.textContent = "Conectando ao jogador Host...";
+          conn = peer.connect(roomIdFromUrl, { reliable: true });
           setupConnectionListeners();
         });
+
+        peer.on('error', (err) => {
+          connectionStatus.textContent = "Erro de conexão: " + err.type;
+          connectionStatus.className = "msg err";
+        });
+
       } else {
-        // Tela inicial para Criar Sala (Jogador X)
+        // Criador da Sala (Jogador X)
         myRole = 'X';
         connectionStatus.textContent = "Pronto para criar uma partida.";
         createRoomBtn.disabled = false;
@@ -320,9 +327,10 @@
 
     createRoomBtn.addEventListener('click', () => {
       const roomId = generateRoomId();
-      peer = new Peer(roomId);
+      connectionStatus.textContent = "Criando sala no servidor...";
+      createRoomBtn.disabled = true;
 
-      connectionStatus.textContent = "Criando sala...";
+      peer = new Peer(roomId);
 
       peer.on('open', (id) => {
         const fullUrl = window.location.origin + window.location.pathname + '?room=' + id;
@@ -335,17 +343,22 @@
       peer.on('connection', (c) => {
         conn = c;
         setupConnectionListeners();
-        // Iniciar jogo para o Host
-        state = defaultState();
-        startGame();
-        sendState();
+      });
+
+      peer.on('error', (err) => {
+        connectionStatus.textContent = "Erro ao criar sala: " + err.type;
+        connectionStatus.className = "msg err";
+        createRoomBtn.disabled = false;
       });
     });
 
     function setupConnectionListeners() {
       conn.on('open', () => {
-        if (myRole === 'O') {
-          connectionStatus.textContent = "Conectado! Iniciando o jogo...";
+        // Só quando o canal estritamente abre é que inicializamos e sincronizamos
+        if (myRole === 'X') {
+          state = defaultState();
+          startGame();
+          sendState();
         }
       });
 
@@ -362,7 +375,11 @@
 
       conn.on('close', () => {
         alert("O outro jogador se desconectou.");
-        window.location.href = window.location.pathname; // Recarrega para o menu
+        window.location.href = window.location.pathname;
+      });
+
+      conn.on('error', (err) => {
+        console.error("Erro na conexão:", err);
       });
     }
 
@@ -439,7 +456,7 @@
       state.seq += 1;
 
       render();
-      sendState(); // Envia a jogada em tempo real para o adversário!
+      sendState();
     }
 
     // --- RENDERIZAÇÃO NA TELA ---
@@ -516,7 +533,6 @@
       }
     }
 
-    // Inicializa o sistema multiplayer
     initNetwork();
   })();
 </script>
