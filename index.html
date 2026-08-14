@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Velha Suprema — Multiplayer Online</title>
-  <!-- Inclui a biblioteca PeerJS para WebRTC P2P -->
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <title>Velha Suprema — Server Multiplayer</title>
+  <!-- Socket.io Client -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <style>
     :root{
       --ink:#171a23;
@@ -199,18 +199,16 @@
     .legend{ font-size:11px; color:var(--muted); text-align:center; line-height:1.6; max-width:520px; }
     .legend b{ color:var(--amber-dim); }
     .hidden{ display:none !important; }
-    @media (prefers-reduced-motion: reduce){ .cell, .mini-board{ transition:none; } }
   </style>
 </head>
 <body>
 <div class="wrap">
   <h1 class="title">Velha <em>Suprema</em></h1>
-  <p class="subtitle">Multiplayer Online</p>
+  <p class="subtitle">Multiplayer com Servidor</p>
 
-  <!-- SETUP / MULTIPLAYER LOBBY -->
   <div class="setup-card" id="setupCard">
     <div class="exchange-label">Modo de Jogo Online</div>
-    <div id="connectionStatus" class="msg ok">Iniciando servidor de rede...</div>
+    <div id="connectionStatus" class="msg ok">Conectando ao servidor...</div>
 
     <div class="setup-row" style="flex-direction: column;">
       <button class="btn" id="createRoomBtn" disabled>Criar Nova Partida</button>
@@ -226,13 +224,11 @@
     </div>
 
     <p class="setup-hint">
-      Crie uma partida e mande o link para o seu amigo. Quem criar a sala joga como <b>X (primeiro)</b>, e quem entrar com o link jogará como <b>O</b>.
+      Crie uma partida e envie o link para seu amigo entrar.
     </p>
   </div>
 
-  <!-- GAME AREA -->
   <div class="wrap" id="gameArea" style="width:100%;padding:0;gap:14px;" hidden>
-
     <div class="status-bar">
       <div class="status-text" id="statusText">
         <span class="turn-chip x">X</span>
@@ -245,7 +241,6 @@
 
     <p class="legend">
       <b>Regra:</b> a casa escolhida dentro de um quadrante define em qual quadrante o adversário deve jogar em seguida.
-      Vença três casas em linha para conquistar um quadrante, e vença três quadrantes em linha para vencer o jogo.
     </p>
   </div>
 </div>
@@ -258,7 +253,10 @@
       [0,4,8],[2,4,6]
     ];
 
-    // Elementos de UI
+    // COLOQUE AQUI A URL DO SEU BACKEND APÓS FAZER O DEPLOY!
+    // Para testes locais utilize: "http://localhost:3000"
+    const BACKEND_URL = "http://localhost:3000";
+
     const setupCard = document.getElementById('setupCard');
     const createRoomBtn = document.getElementById('createRoomBtn');
     const connectionStatus = document.getElementById('connectionStatus');
@@ -273,127 +271,71 @@
     const megaBoardEl = document.getElementById('megaBoard');
     const resetBtn = document.getElementById('resetBtn');
 
-    // Variáveis de Estado
-    let myRole = 'X';
+    let socket = null;
+    let currentRoomId = null;
+    let myRole = null;
     let state = null;
-    let peer = null;
-    let conn = null;
-
-    function defaultState(){
-      return {
-        boards: Array.from({length:9}, () => Array(9).fill(null)),
-        boardWinner: Array(9).fill(null),
-        currentPlayer: 'X',
-        activeBoard: null,
-        gameOver: false,
-        winner: null,
-        seq: 0
-      };
-    }
-
-    function generateRoomId() {
-      return 'velha-' + Math.random().toString(36).substring(2, 8);
-    }
 
     function initNetwork() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const roomIdFromUrl = urlParams.get('room');
+      socket = io(BACKEND_URL);
 
-      if (roomIdFromUrl) {
-        // Entrando via Link do Amigo (Jogador O)
-        myRole = 'O';
-        connectionStatus.textContent = "Conectando ao servidor de salas...";
+      socket.on('connect', () => {
+        connectionStatus.textContent = "Conectado ao servidor!";
 
-        peer = new Peer();
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomIdFromUrl = urlParams.get('room');
 
-        peer.on('open', () => {
-          connectionStatus.textContent = "Conectando ao jogador Host...";
-          conn = peer.connect(roomIdFromUrl, { reliable: true });
-          setupConnectionListeners();
-        });
+        if (roomIdFromUrl) {
+          connectionStatus.textContent = "Entrando na sala...";
+          socket.emit('join_room', roomIdFromUrl);
+        } else {
+          createRoomBtn.disabled = false;
+        }
+      });
 
-        peer.on('error', (err) => {
-          connectionStatus.textContent = "Erro de conexão: " + err.type;
-          connectionStatus.className = "msg err";
-        });
+      socket.on('room_created', ({ roomId, role }) => {
+        currentRoomId = roomId;
+        myRole = role;
 
-      } else {
-        // Criador da Sala (Jogador X)
-        myRole = 'X';
-        connectionStatus.textContent = "Pronto para criar uma partida.";
-        createRoomBtn.disabled = false;
-      }
-    }
-
-    createRoomBtn.addEventListener('click', () => {
-      const roomId = generateRoomId();
-      connectionStatus.textContent = "Criando sala no servidor...";
-      createRoomBtn.disabled = true;
-
-      peer = new Peer(roomId);
-
-      peer.on('open', (id) => {
-        const fullUrl = window.location.origin + window.location.pathname + '?room=' + id;
+        const fullUrl = window.location.origin + window.location.pathname + '?room=' + roomId;
         shareLinkInput.value = fullUrl;
         shareRoomArea.classList.remove('hidden');
         createRoomBtn.classList.add('hidden');
-        connectionStatus.textContent = "Aguardando o segundo jogador entrar...";
+        connectionStatus.textContent = "Aguardando o segundo jogador...";
       });
 
-      peer.on('connection', (c) => {
-        conn = c;
-        setupConnectionListeners();
+      socket.on('room_joined', ({ roomId, role }) => {
+        currentRoomId = roomId;
+        myRole = role;
       });
 
-      peer.on('error', (err) => {
-        connectionStatus.textContent = "Erro ao criar sala: " + err.type;
-        connectionStatus.className = "msg err";
-        createRoomBtn.disabled = false;
-      });
-    });
-
-    function setupConnectionListeners() {
-      conn.on('open', () => {
-        // Só quando o canal estritamente abre é que inicializamos e sincronizamos
-        if (myRole === 'X') {
-          state = defaultState();
-          startGame();
-          sendState();
-        }
+      socket.on('start_game', ({ gameState }) => {
+        state = gameState;
+        setupCard.classList.add('hidden');
+        gameArea.hidden = false;
+        render();
       });
 
-      conn.on('data', (data) => {
-        if (data.type === 'STATE_UPDATE') {
-          state = data.state;
-          if (gameArea.hidden) startGame();
-          render();
-        } else if (data.type === 'RESET_GAME') {
-          state = defaultState();
-          render();
-        }
+      socket.on('update_game_state', (newState) => {
+        state = newState;
+        render();
       });
 
-      conn.on('close', () => {
-        alert("O outro jogador se desconectou.");
+      socket.on('error_message', (msg) => {
+        alert(msg);
         window.location.href = window.location.pathname;
       });
 
-      conn.on('error', (err) => {
-        console.error("Erro na conexão:", err);
+      socket.on('player_left', () => {
+        alert('O outro jogador saiu da partida.');
+        window.location.href = window.location.pathname;
       });
     }
 
-    function sendState() {
-      if (conn && conn.open) {
-        conn.send({ type: 'STATE_UPDATE', state: state });
-      }
-    }
-
-    function sendReset() {
-      if (conn && conn.open) {
-        conn.send({ type: 'RESET_GAME' });
-      }
-    }
+    createRoomBtn.addEventListener('click', () => {
+      createRoomBtn.disabled = true;
+      socket.emit('create_room');
+    });
 
     copyLinkBtn.addEventListener('click', async () => {
       try {
@@ -406,17 +348,8 @@
       setTimeout(() => copyMsg.classList.add('hidden'), 2000);
     });
 
-    function startGame() {
-      setupCard.classList.add('hidden');
-      gameArea.hidden = false;
-      render();
-    }
-
-    // --- REGRAS E LÓGICA DO JOGO ---
     resetBtn.addEventListener('click', () => {
-      state = defaultState();
-      sendReset();
-      render();
+      socket.emit('reset_game', currentRoomId);
     });
 
     function checkWinner(cells){
@@ -453,13 +386,13 @@
         state.currentPlayer = state.currentPlayer === 'X' ? 'O' : 'X';
         state.activeBoard = isBoardOpen(cellIdx) ? cellIdx : null;
       }
-      state.seq += 1;
 
       render();
-      sendState();
+
+      // Envia o movimento para o servidor
+      socket.emit('make_move', { roomId: currentRoomId, gameState: state });
     }
 
-    // --- RENDERIZAÇÃO NA TELA ---
     function render(){
       const chip = statusText.querySelector('.turn-chip');
 
@@ -493,8 +426,6 @@
       for(let b = 0; b < 9; b++){
         const miniEl = document.createElement('div');
         miniEl.className = 'mini-board';
-        miniEl.setAttribute('role','group');
-        miniEl.setAttribute('aria-label', `Quadrante ${b+1}`);
 
         const won = state.boardWinner[b];
         if(!state.gameOver && won === null && (state.activeBoard === null || state.activeBoard === b)){
@@ -506,7 +437,6 @@
           const cellEl = document.createElement('button');
           cellEl.className = 'cell' + (val ? ' ' + val.toLowerCase() : '');
           cellEl.textContent = val || '';
-          cellEl.setAttribute('aria-label', `Quadrante ${b+1}, casa ${c+1}${val ? ', ' + val : ', vazia'}`);
 
           const notMyTurn = myRole !== state.currentPlayer;
           const disabled = state.gameOver || won !== null || val !== null ||
