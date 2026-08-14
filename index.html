@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Velha Suprema — Multiplayer Online</title>
-  <!-- Inclui a biblioteca PeerJS para WebRTC P2P -->
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <title>Velha Suprema — por código</title>
   <style>
     :root{
       --ink:#171a23;
@@ -60,7 +58,7 @@
       color:var(--amber-dim);
     }
 
-    .setup-card, .online-card{
+    .setup-card{
       width:100%;
       background:var(--ink-soft);
       border:1px solid #313749;
@@ -71,15 +69,40 @@
       gap:12px;
     }
     .setup-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    .role-btn{
+      flex:1;
+      min-width:120px;
+      background:var(--ink);
+      border:1px solid #3a4155;
+      color:var(--paper);
+      padding:12px;
+      border-radius:4px;
+      font-family:inherit;
+      font-size:13px;
+      cursor:pointer;
+      text-align:center;
+    }
+    .role-btn.selected.x{ border-color:var(--x-color); background:rgba(77,126,168,0.15); }
+    .role-btn.selected.o{ border-color:var(--o-color); background:rgba(181,72,79,0.15); }
     .setup-hint{ font-size:11px; color:var(--muted); text-align:center; line-height:1.6; }
 
+    .exchange-card{
+      width:100%;
+      background:var(--ink-soft);
+      border:1px solid #313749;
+      border-radius:6px;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
     .exchange-label{
       font-size:10px;
       letter-spacing:1.5px;
       text-transform:uppercase;
       color:var(--muted);
     }
-    input[type="text"]{
+    textarea{
       width:100%;
       background:var(--ink);
       border:1px solid #3a4155;
@@ -88,8 +111,10 @@
       border-radius:4px;
       font-family:inherit;
       font-size:12px;
+      resize:vertical;
+      min-height:56px;
     }
-    input[type="text"]:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
+    textarea:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
     .row{ display:flex; gap:8px; flex-wrap:wrap; }
     .btn{
       background:var(--amber);
@@ -104,7 +129,6 @@
       text-transform:uppercase;
       cursor:pointer;
       transition:filter .15s ease;
-      flex: 1;
     }
     .btn:hover{ filter:brightness(1.08); }
     .btn:disabled{ opacity:0.4; cursor:default; }
@@ -205,32 +229,23 @@
 <body>
 <div class="wrap">
   <h1 class="title">Velha <em>Suprema</em></h1>
-  <p class="subtitle">Multiplayer Online</p>
+  <p class="subtitle">jogue por código de partida</p>
 
-  <!-- SETUP / MULTIPLAYER LOBBY -->
+  <!-- SETUP -->
   <div class="setup-card" id="setupCard">
-    <div class="exchange-label">Modo de Jogo Online</div>
-    <div id="connectionStatus" class="msg ok">Iniciando rede multiplayer...</div>
-
-    <div class="setup-row" style="flex-direction: column;">
-      <button class="btn" id="createRoomBtn" disabled>Criar Nova Partida</button>
+    <div class="exchange-label">quem começa jogando</div>
+    <div class="setup-row">
+      <button class="role-btn x selected" id="roleXBtn" data-role="X">Eu sou X (começo)</button>
+      <button class="role-btn o" id="roleOBtn" data-role="O">Eu sou O (espero a jogada)</button>
     </div>
-
-    <div class="online-card hidden" id="shareRoomArea">
-      <div class="exchange-label">Link da Partida (Envie ao seu amigo)</div>
-      <input type="text" id="shareLink" readonly>
-      <div class="row">
-        <button class="btn" id="copyLinkBtn">Copiar Link</button>
-      </div>
-      <div class="msg ok hidden" id="copyMsg">Link copiado!</div>
-    </div>
-
     <p class="setup-hint">
-      Crie uma partida e mande o link para o seu amigo. Quem criar a sala joga como <b>X (primeiro)</b>, e quem entrar com o link jogará como <b>O</b>.
+      Combine com a outra pessoa quem é X e quem é O antes de começar — <b style="color:var(--amber-dim)">um de vocês escolhe "Eu sou X"</b> e o outro escolhe "Eu sou O" no jogo dele.
+      Quem for X faz a primeira jogada e gera o primeiro código para enviar.
     </p>
+    <button class="btn" id="startBtn">Começar</button>
   </div>
 
-  <!-- GAME AREA -->
+  <!-- GAME -->
   <div class="wrap" id="gameArea" style="width:100%;padding:0;gap:14px;" hidden>
 
     <div class="status-bar">
@@ -238,14 +253,33 @@
         <span class="turn-chip x">X</span>
         <span id="statusMsg"></span>
       </div>
-      <button class="btn ghost" id="resetBtn" style="padding:6px 10px;font-size:11px;flex:none;">Reiniciar</button>
+      <button class="btn ghost" id="resetBtn" style="padding:6px 10px;font-size:11px;">Reiniciar</button>
     </div>
 
     <div class="mega-board" id="megaBoard" role="grid" aria-label="Tabuleiro da velha suprema"></div>
 
+    <div class="exchange-card">
+      <div class="exchange-label" id="outLabel">Envie este código para a outra pessoa</div>
+      <textarea id="outCode" readonly rows="2"></textarea>
+      <div class="row">
+        <button class="btn" id="copyBtn">Copiar código</button>
+      </div>
+      <div class="msg ok hidden" id="copyMsg">copiado!</div>
+    </div>
+
+    <div class="exchange-card">
+      <div class="exchange-label">Cole aqui o código que você recebeu</div>
+      <textarea id="inCode" rows="2" placeholder="cole o código recebido aqui..."></textarea>
+      <div class="row">
+        <button class="btn ghost" id="loadBtn">Carregar jogada</button>
+      </div>
+      <div class="msg hidden" id="loadMsg"></div>
+    </div>
+
     <p class="legend">
       <b>Regra:</b> a casa escolhida dentro de um quadrante define em qual quadrante o adversário deve jogar em seguida.
       Vença três casas em linha para conquistar um quadrante, e vença três quadrantes em linha para vencer o jogo.
+      Após cada jogada, copie o código gerado e envie para a outra pessoa; quando receber o código dela, cole-o acima para atualizar o tabuleiro.
     </p>
   </div>
 </div>
@@ -258,14 +292,10 @@
       [0,4,8],[2,4,6]
     ];
 
-    // Elementos de UI
     const setupCard = document.getElementById('setupCard');
-    const createRoomBtn = document.getElementById('createRoomBtn');
-    const connectionStatus = document.getElementById('connectionStatus');
-    const shareRoomArea = document.getElementById('shareRoomArea');
-    const shareLinkInput = document.getElementById('shareLink');
-    const copyLinkBtn = document.getElementById('copyLinkBtn');
-    const copyMsg = document.getElementById('copyMsg');
+    const roleXBtn = document.getElementById('roleXBtn');
+    const roleOBtn = document.getElementById('roleOBtn');
+    const startBtn = document.getElementById('startBtn');
 
     const gameArea = document.getElementById('gameArea');
     const statusText = document.getElementById('statusText');
@@ -273,11 +303,17 @@
     const megaBoardEl = document.getElementById('megaBoard');
     const resetBtn = document.getElementById('resetBtn');
 
-    // Variáveis de Estado
+    const outLabel = document.getElementById('outLabel');
+    const outCode = document.getElementById('outCode');
+    const copyBtn = document.getElementById('copyBtn');
+    const copyMsg = document.getElementById('copyMsg');
+
+    const inCode = document.getElementById('inCode');
+    const loadBtn = document.getElementById('loadBtn');
+    const loadMsg = document.getElementById('loadMsg');
+
     let myRole = 'X';
     let state = null;
-    let peer = null;
-    let conn = null;
 
     function defaultState(){
       return {
@@ -291,114 +327,24 @@
       };
     }
 
-    // --- LÓGICA DE REDE (WebRTC com PeerJS) ---
-    function generateRoomId() {
-      return 'velha-' + Math.random().toString(36).substring(2, 8);
+    roleXBtn.addEventListener('click', () => selectRole('X'));
+    roleOBtn.addEventListener('click', () => selectRole('O'));
+
+    function selectRole(role){
+      myRole = role;
+      roleXBtn.classList.toggle('selected', role === 'X');
+      roleOBtn.classList.toggle('selected', role === 'O');
     }
 
-    function initNetwork() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const roomIdFromUrl = urlParams.get('room');
-
-      if (roomIdFromUrl) {
-        // Entrando em uma sala existente (Jogador O)
-        myRole = 'O';
-        connectionStatus.textContent = "Conectando ao jogador Host...";
-        peer = new Peer();
-
-        peer.on('open', () => {
-          conn = peer.connect(roomIdFromUrl);
-          setupConnectionListeners();
-        });
-      } else {
-        // Tela inicial para Criar Sala (Jogador X)
-        myRole = 'X';
-        connectionStatus.textContent = "Pronto para criar uma partida.";
-        createRoomBtn.disabled = false;
-      }
-    }
-
-    createRoomBtn.addEventListener('click', () => {
-      const roomId = generateRoomId();
-      peer = new Peer(roomId);
-
-      connectionStatus.textContent = "Criando sala...";
-
-      peer.on('open', (id) => {
-        const fullUrl = window.location.origin + window.location.pathname + '?room=' + id;
-        shareLinkInput.value = fullUrl;
-        shareRoomArea.classList.remove('hidden');
-        createRoomBtn.classList.add('hidden');
-        connectionStatus.textContent = "Aguardando o segundo jogador entrar...";
-      });
-
-      peer.on('connection', (c) => {
-        conn = c;
-        setupConnectionListeners();
-        // Iniciar jogo para o Host
-        state = defaultState();
-        startGame();
-        sendState();
-      });
-    });
-
-    function setupConnectionListeners() {
-      conn.on('open', () => {
-        if (myRole === 'O') {
-          connectionStatus.textContent = "Conectado! Iniciando o jogo...";
-        }
-      });
-
-      conn.on('data', (data) => {
-        if (data.type === 'STATE_UPDATE') {
-          state = data.state;
-          if (gameArea.hidden) startGame();
-          render();
-        } else if (data.type === 'RESET_GAME') {
-          state = defaultState();
-          render();
-        }
-      });
-
-      conn.on('close', () => {
-        alert("O outro jogador se desconectou.");
-        window.location.href = window.location.pathname; // Recarrega para o menu
-      });
-    }
-
-    function sendState() {
-      if (conn && conn.open) {
-        conn.send({ type: 'STATE_UPDATE', state: state });
-      }
-    }
-
-    function sendReset() {
-      if (conn && conn.open) {
-        conn.send({ type: 'RESET_GAME' });
-      }
-    }
-
-    copyLinkBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(shareLinkInput.value);
-      } catch (e) {
-        shareLinkInput.select();
-        document.execCommand('copy');
-      }
-      copyMsg.classList.remove('hidden');
-      setTimeout(() => copyMsg.classList.add('hidden'), 2000);
-    });
-
-    function startGame() {
+    startBtn.addEventListener('click', () => {
+      state = defaultState();
       setupCard.classList.add('hidden');
       gameArea.hidden = false;
       render();
-    }
+    });
 
-    // --- REGRAS E LÓGICA DO JOGO ---
     resetBtn.addEventListener('click', () => {
       state = defaultState();
-      sendReset();
       render();
     });
 
@@ -439,25 +385,73 @@
       state.seq += 1;
 
       render();
-      sendState(); // Envia a jogada em tempo real para o adversário!
     }
 
-    // --- RENDERIZAÇÃO NA TELA ---
+    function encodeState(){
+      const json = JSON.stringify(state);
+      return btoa(unescape(encodeURIComponent(json)));
+    }
+
+    function decodeState(code){
+      const json = decodeURIComponent(escape(atob(code.trim())));
+      const obj = JSON.parse(json);
+      if(!obj || !Array.isArray(obj.boards) || obj.boards.length !== 9) throw new Error('formato inválido');
+      return obj;
+    }
+
+    copyBtn.addEventListener('click', async () => {
+      try{
+        await navigator.clipboard.writeText(outCode.value);
+      }catch(e){
+        outCode.select();
+        document.execCommand('copy');
+      }
+      copyMsg.classList.remove('hidden');
+      setTimeout(() => copyMsg.classList.add('hidden'), 1500);
+    });
+
+    loadBtn.addEventListener('click', () => {
+      loadMsg.classList.remove('hidden');
+      loadMsg.className = 'msg';
+      try{
+        const raw = inCode.value.trim();
+        if(!raw){ throw new Error('cole um código antes de carregar'); }
+        const incoming = decodeState(raw);
+
+        if(state && incoming.seq <= state.seq && state.seq > 0){
+          throw new Error('esse código já foi carregado ou é mais antigo que sua partida atual');
+        }
+
+        state = incoming;
+        inCode.value = '';
+        loadMsg.textContent = 'jogada carregada!';
+        loadMsg.classList.add('ok');
+        render();
+      }catch(err){
+        loadMsg.textContent = 'código inválido — confira se copiou tudo certinho. (' + err.message + ')';
+        loadMsg.classList.add('err');
+      }
+      setTimeout(() => loadMsg.classList.add('hidden'), 3500);
+    });
+
     function render(){
+      outCode.value = encodeState();
+
       const chip = statusText.querySelector('.turn-chip');
 
       if(state.gameOver){
         if(state.winner === 'D'){
           chip.style.display = 'none';
-          statusMsg.textContent = 'Empate geral — nenhum jogador venceu';
+          statusMsg.textContent = 'empate geral — nenhum jogador venceu';
         } else {
           chip.style.display = '';
           chip.className = 'turn-chip ' + state.winner.toLowerCase();
           chip.textContent = state.winner;
           statusMsg.textContent = state.winner === myRole
-                  ? 'Você venceu o jogo! 🎉'
-                  : `${state.winner} venceu o jogo!`;
+                  ? 'você venceu o jogo!'
+                  : `${state.winner} venceu o jogo`;
         }
+        outLabel.textContent = 'Envie o resultado final para a outra pessoa';
       } else {
         chip.style.display = '';
         chip.className = 'turn-chip ' + state.currentPlayer.toLowerCase();
@@ -465,10 +459,12 @@
         const isMyTurn = myRole === state.currentPlayer;
         if(isMyTurn){
           statusMsg.textContent = state.activeBoard === null
-                  ? 'Sua vez — jogue em qualquer quadrante'
-                  : `Sua vez — jogue no quadrante ${state.activeBoard + 1}`;
+                  ? 'sua vez — jogue em qualquer quadrante'
+                  : `sua vez — jogue no quadrante ${state.activeBoard + 1}`;
+          outLabel.textContent = 'Faça sua jogada abaixo, depois copie e envie este código';
         } else {
-          statusMsg.textContent = `Aguardando a jogada de ${state.currentPlayer}...`;
+          statusMsg.textContent = `aguardando a jogada de ${state.currentPlayer}`;
+          outLabel.textContent = 'Aguarde o código da outra pessoa e cole abaixo';
         }
       }
 
@@ -515,9 +511,6 @@
         megaBoardEl.appendChild(miniEl);
       }
     }
-
-    // Inicializa o sistema multiplayer
-    initNetwork();
   })();
 </script>
 </body>
