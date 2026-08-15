@@ -84,8 +84,6 @@
             const roomIdFromUrl = urlParams.get('room');
 
             if (roomIdFromUrl) {
-                // Quem entra por link fica na splash até o jogo começar,
-                // e cai direto no tabuleiro.
                 splashSub.textContent = 'entrando na partida';
                 socket.emit('join_room', roomIdFromUrl);
             } else {
