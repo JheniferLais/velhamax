@@ -31,10 +31,20 @@
     const rematchBtn = document.getElementById('rematchBtn');
     const mascotEl = document.getElementById('mascot');
 
+    const chatWrap = document.getElementById('chatWrap');
+    const chatToggle = document.getElementById('chatToggle');
+    const chatBody = document.getElementById('chatBody');
+    const chatBadge = document.getElementById('chatBadge');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+
     let socket = null;
     let currentRoomId = null;
     let myRole = null;
     let state = null;
+    let chatOpen = false;
+    let unreadCount = 0;
 
     // ---------- Mascote: pixel-art de um X 5x5 ----------
     (function buildMascot(){
@@ -115,12 +125,17 @@
             endPanel.classList.add('hidden');
             hideSplash();
             showScreen('game');
+            resetChat();
             render();
         });
 
         socket.on('update_game_state', (newState) => {
             state = newState;
             render();
+        });
+
+        socket.on('chat_message', ({ role, text }) => {
+            addChatMessage(role, text, role === myRole);
         });
 
         socket.on('error_message', (msg) => {
@@ -157,6 +172,79 @@
     rematchBtn.addEventListener('click', () => {
         rematchBtn.disabled = true;
         socket.emit('reset_game', currentRoomId);
+    });
+
+    // ---------- Chat ----------
+    function resetChat(){
+        chatMessages.innerHTML = '';
+        unreadCount = 0;
+        updateChatBadge();
+        renderChatEmptyState();
+    }
+
+    function renderChatEmptyState(){
+        if(chatMessages.children.length === 0){
+            const empty = document.createElement('div');
+            empty.className = 'chat-empty';
+            empty.textContent = 'Nenhuma mensagem ainda';
+            chatMessages.appendChild(empty);
+        }
+    }
+
+    function addChatMessage(role, text, mine){
+        const emptyEl = chatMessages.querySelector('.chat-empty');
+        if(emptyEl) emptyEl.remove();
+
+        const msgEl = document.createElement('div');
+        msgEl.className = 'chat-msg ' + (mine ? 'mine' : 'theirs');
+
+        const authorEl = document.createElement('span');
+        authorEl.className = 'chat-author';
+        authorEl.textContent = mine ? 'você (' + role + ')' : role;
+        msgEl.appendChild(authorEl);
+
+        const textEl = document.createElement('span');
+        textEl.textContent = text;
+        msgEl.appendChild(textEl);
+
+        chatMessages.appendChild(msgEl);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        if(!mine && !chatOpen){
+            unreadCount++;
+            updateChatBadge();
+        }
+    }
+
+    function updateChatBadge(){
+        if(unreadCount > 0){
+            chatBadge.textContent = unreadCount > 9 ? '9+' : String(unreadCount);
+            chatBadge.classList.remove('hidden');
+        } else {
+            chatBadge.classList.add('hidden');
+        }
+    }
+
+    chatToggle.addEventListener('click', () => {
+        chatOpen = !chatOpen;
+        chatBody.classList.toggle('hidden', !chatOpen);
+        chatWrap.classList.toggle('open', chatOpen);
+        chatToggle.setAttribute('aria-expanded', String(chatOpen));
+        if(chatOpen){
+            unreadCount = 0;
+            updateChatBadge();
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            chatInput.focus();
+        }
+    });
+
+    chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if(!text || !currentRoomId || !myRole) return;
+        chatInput.value = '';
+        addChatMessage(myRole, text, true);
+        socket.emit('send_message', { roomId: currentRoomId, role: myRole, text });
     });
 
     function checkWinner(cells){

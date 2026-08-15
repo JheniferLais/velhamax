@@ -90,6 +90,23 @@
             <p class="legend">
                 <b>Regra:</b> a casa escolhida dentro de um quadrante define em qual quadrante o adversário deve jogar em seguida.
             </p>
+
+            <!-- Tela: chat -->
+            <div class="chat-wrap" id="chatWrap">
+                <button class="chat-head" id="chatToggle" type="button" aria-expanded="false">
+                    <span class="arrow">›</span>
+                    <span class="chat-title">chat</span>
+                    <span class="chat-badge hidden" id="chatBadge">0</span>
+                    <span class="chat-caret" id="chatCaret">▾</span>
+                </button>
+                <div class="chat-body hidden" id="chatBody">
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <form class="chat-form" id="chatForm">
+                        <input type="text" id="chatInput" maxlength="200" autocomplete="off" placeholder="mensagem...">
+                        <button class="btn chat-send" type="submit">Enviar</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
