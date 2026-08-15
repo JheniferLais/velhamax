@@ -14,7 +14,6 @@ const io = new Server(server, {
     }
 });
 
-// teste 2
 const rooms = new Map();
 
 function defaultGameState() {
@@ -81,6 +80,19 @@ io.on('connection', (socket) => {
             // Transmite o novo estado para o outro jogador
             socket.to(roomId).emit('update_game_state', gameState);
         }
+    });
+
+    // Chat entre os jogadores da sala
+    socket.on('send_message', ({ roomId, role, text }) => {
+        const room = rooms.get(roomId);
+        if (!room) return;
+
+        if (typeof text !== 'string') return;
+        const clean = text.trim().slice(0, 200);
+        if (!clean) return;
+
+        // Envia apenas para o outro jogador (o remetente já mostra a própria mensagem localmente)
+        socket.to(roomId).emit('chat_message', { role, text: clean });
     });
 
     // Reiniciar Partida
