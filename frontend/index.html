@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velha MAX</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Tela: Splash -->
+<div id="splash">
+    <div class="boot">
+        <div class="line"><span class="prompt">$</span><span class="cmd">velha-max --connect</span></div>
+        <div class="line" id="bootLine2"><span class="ok">›</span><span id="splashSub">conectando ao servidor...</span></div>
+    </div>
+</div>
+
+<!-- Tela: top bar -->
+<div class="terminal">
+    <div class="terminal-bar">
+        <span class="tdot red"></span>
+        <span class="tdot yellow"></span>
+        <span class="tdot status" id="barDot"></span>
+        <span class="terminal-label" id="barLabel">velha-max</span>
+    </div>
+
+    <div class="terminal-body">
+        <div class="mascot" id="mascot"></div>
+        <div class="header-block">
+            <p class="title">Velha <em>MAX</em></p>
+            <p class="subtitle">Multiplayer online</p>
+        </div>
+
+        <!-- Tela: lobby criar partida-->
+        <div class="section" id="lobbyCard" hidden style="width:100%;">
+            <div id="createStage">
+                <div class="section-head">nova partida</div>
+                <div class="section-body">
+                    <p class="hint">Crie uma partida e envie o link para seu amigo entrar. Assim que ele entrar, o jogo começa.</p>
+                    <div class="row">
+                        <button class="btn" id="createRoomBtn">Criar Nova Partida</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tela: link da partida -->
+            <div id="waitStage" class="hidden">
+                <div class="section-head">aguardando jogador</div>
+                <div class="section-body">
+                    <div class="waiting-line">
+                        <span class="tdot status connecting"></span>
+                        <span>Aguardando o segundo jogador...</span>
+                    </div>
+                    <p class="hint">Envie este link para seu amigo entrar na partida:</p>
+                    <input type="text" id="shareLink" readonly>
+                    <div class="row">
+                        <button class="btn ghost" id="copyLinkBtn">Copiar Link</button>
+                    </div>
+                    <div class="msg hidden" id="copyMsg">Link copiado!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela: jogo(tabuleiro) -->
+        <div class="game-wrap" id="gameArea" hidden>
+            <div class="status-line">
+                <span class="arrow">›</span>
+                <span class="turn-chip x" id="turnChip">X</span>
+                <span id="statusMsg"></span>
+            </div>
+
+            <div class="mega-board" id="megaBoard" role="grid" aria-label="Tabuleiro da velha suprema"></div>
+
+            <div class="end-panel hidden" id="endPanel">
+                <p class="end-title" id="endTitle"></p>
+                <div class="row">
+                    <button class="btn violet" id="rematchBtn">Revanche</button>
+                </div>
+            </div>
+
+            <p class="legend">
+                <b>Regra:</b> a casa escolhida dentro de um quadrante define em qual quadrante o adversário deve jogar em seguida.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
