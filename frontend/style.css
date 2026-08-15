@@ -425,8 +425,9 @@ input[type="text"]:focus-visible{ outline:1px solid var(--accent); outline-offse
     width:auto;
     padding:8px 10px;
 }
-.chat-send{
+.chat-form .chat-send{
     flex:0 0 auto;
+    width:auto;
     padding:8px 14px;
     font-size:11px;
     white-space:nowrap;
@@ -435,11 +436,11 @@ input[type="text"]:focus-visible{ outline:1px solid var(--accent); outline-offse
 @media (max-width:420px){
     .chat-messages{ max-height:180px; }
     .chat-form{ padding:8px 10px; gap:6px; }
-    .chat-send{ padding:8px 10px; font-size:10.5px; }
+    .chat-form .chat-send{ width:auto; padding:8px 10px; font-size:10.5px; }
 }
 
 @media (max-width:340px){
-    .chat-send{ padding:7px 8px; font-size:10px; }
+    .chat-form .chat-send{ width:auto; padding:7px 8px; font-size:10px; }
 }
 
 /* ---------- End of match ---------- */
