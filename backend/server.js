@@ -14,7 +14,7 @@ const io = new Server(server, {
     }
 });
 
-// Armazena as salas na memória do servidor
+// teste
 const rooms = new Map();
 
 function defaultGameState() {
