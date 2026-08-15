@@ -388,6 +388,7 @@ input[type="text"]:focus-visible{ outline:1px solid var(--accent); outline-offse
     font-size:12px;
     line-height:1.4;
     word-break:break-word;
+    overflow-wrap:anywhere;
     background:var(--panel);
     border:1px solid var(--border);
     align-self:flex-start;
@@ -412,16 +413,33 @@ input[type="text"]:focus-visible{ outline:1px solid var(--accent); outline-offse
 }
 .chat-form{
     display:flex;
+    align-items:center;
     gap:8px;
     padding:10px 12px;
     border-top:1px solid var(--border);
+    width:100%;
 }
-.chat-form input[type="text"]{ flex:1; padding:8px 10px; }
-.chat-send{ flex:0 0 auto; padding:8px 14px; font-size:11px; }
+.chat-form input[type="text"]{
+    flex:1 1 auto;
+    min-width:0;
+    width:auto;
+    padding:8px 10px;
+}
+.chat-send{
+    flex:0 0 auto;
+    padding:8px 14px;
+    font-size:11px;
+    white-space:nowrap;
+}
 
 @media (max-width:420px){
     .chat-messages{ max-height:180px; }
     .chat-form{ padding:8px 10px; gap:6px; }
+    .chat-send{ padding:8px 10px; font-size:10.5px; }
+}
+
+@media (max-width:340px){
+    .chat-send{ padding:7px 8px; font-size:10px; }
 }
 
 /* ---------- End of match ---------- */
