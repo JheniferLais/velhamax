@@ -66,15 +66,6 @@
     .boot .cmd{ color:var(--text); }
     .boot .ok{ color:var(--green); }
     .boot .line{ display:flex; gap:8px; }
-    .cursor{
-      display:inline-block;
-      width:7px; height:14px;
-      background:var(--accent);
-      margin-left:2px;
-      animation:blinkCursor 1s steps(1) infinite;
-      vertical-align:middle;
-    }
-    @keyframes blinkCursor{ 0%,49%{opacity:1;} 50%,100%{opacity:0;} }
 
     /* ---------- Terminal frame ---------- */
     .terminal{
@@ -346,7 +337,7 @@
 <div id="splash">
   <div class="boot">
     <div class="line"><span class="prompt">$</span><span class="cmd">velha-max --connect</span></div>
-    <div class="line" id="bootLine2"><span class="ok">›</span><span id="splashSub">conectando ao servidor...</span><span class="cursor"></span></div>
+    <div class="line" id="bootLine2"><span class="ok">›</span><span id="splashSub">conectando ao servidor...</span></div>
   </div>
 </div>
 
