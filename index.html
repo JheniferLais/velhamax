@@ -317,40 +317,6 @@
     .mini-overlay.o{ background:#20193b; color:var(--violet); }
     .mini-overlay.d{ background:var(--panel-2); color:var(--text-faint); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; border:1px solid var(--border); }
 
-    /* ---------- Move history (log-style) ---------- */
-    .history{
-      width:100%;
-      display:flex;
-      align-items:center;
-      gap:0;
-      overflow-x:auto;
-      font-size:10.5px;
-      border:1px solid var(--border);
-      border-radius:5px;
-      background:var(--bg);
-      scrollbar-width:thin;
-    }
-    .history::-webkit-scrollbar{ height:4px; }
-    .history::-webkit-scrollbar-thumb{ background:var(--border); border-radius:2px; }
-    .history-label{
-      flex-shrink:0;
-      padding:8px 10px;
-      color:var(--text-faint);
-      letter-spacing:1px;
-      text-transform:uppercase;
-      border-right:1px solid var(--border);
-    }
-    .history-chip{
-      flex-shrink:0;
-      padding:8px 9px;
-      color:var(--text-dim);
-      border-right:1px solid var(--border-soft);
-      white-space:nowrap;
-    }
-    .history-chip.x{ color:var(--accent); }
-    .history-chip.o{ color:var(--violet); }
-    .history-chip.latest{ background:var(--panel-2); color:var(--text); }
-
     .legend{ font-size:10.5px; color:var(--text-faint); text-align:center; line-height:1.6; max-width:440px; }
     .legend b{ color:var(--text-dim); }
 
@@ -380,7 +346,7 @@
 <div id="splash">
   <div class="boot">
     <div class="line"><span class="prompt">$</span><span class="cmd">velha-max --connect</span></div>
-    <div class="line" id="bootLine2"><span class="ok">›</span><span id="splashSub">conectando ao servidor</span><span class="cursor"></span></div>
+    <div class="line" id="bootLine2"><span class="ok">›</span><span id="splashSub">conectando ao servidor...</span><span class="cursor"></span></div>
   </div>
 </div>
 
@@ -438,10 +404,6 @@
 
       <div class="mega-board" id="megaBoard" role="grid" aria-label="Tabuleiro da velha suprema"></div>
 
-      <div class="history hidden" id="historyBar">
-        <span class="history-label">log</span>
-      </div>
-
       <div class="end-panel hidden" id="endPanel">
         <p class="end-title" id="endTitle"></p>
         <div class="row">
@@ -464,6 +426,8 @@
       [0,4,8],[2,4,6]
     ];
 
+    // COLOQUE AQUI A URL DO SEU BACKEND APÓS FAZER O DEPLOY!
+    // Para testes locais utilize: "http://localhost:3000"
     const BACKEND_URL = "https://velhamax.onrender.com";
 
     const splash = document.getElementById('splash');
@@ -485,7 +449,6 @@
     const turnChip = document.getElementById('turnChip');
     const statusMsg = document.getElementById('statusMsg');
     const megaBoardEl = document.getElementById('megaBoard');
-    const historyBar = document.getElementById('historyBar');
     const endPanel = document.getElementById('endPanel');
     const endTitle = document.getElementById('endTitle');
     const rematchBtn = document.getElementById('rematchBtn');
@@ -496,6 +459,7 @@
     let myRole = null;
     let state = null;
 
+    // ---------- Mascote: pixel-art de um X 5x5 ----------
     (function buildMascot(){
       const onCells = new Set([0,4,6,8,12,16,18,20,24]);
       for(let i = 0; i < 25; i++){
@@ -543,6 +507,8 @@
         const roomIdFromUrl = urlParams.get('room');
 
         if (roomIdFromUrl) {
+          // Quem entra por link fica na splash até o jogo começar,
+          // e cai direto no tabuleiro.
           splashSub.textContent = 'entrando na partida';
           socket.emit('join_room', roomIdFromUrl);
         } else {
@@ -571,7 +537,6 @@
 
       socket.on('start_game', ({ gameState }) => {
         state = gameState;
-        historyBar.querySelectorAll('.history-chip').forEach(el => el.remove());
         endPanel.classList.add('hidden');
         hideSplash();
         showScreen('game');
@@ -612,6 +577,8 @@
       setTimeout(() => copyMsg.classList.add('hidden'), 2000);
     });
 
+    // Revanche: reseta o tabuleiro na MESMA sala, sem precisar reenviar link.
+    // Qualquer um dos dois jogadores pode iniciar; o servidor sincroniza os dois.
     rematchBtn.addEventListener('click', () => {
       rematchBtn.disabled = true;
       socket.emit('reset_game', currentRoomId);
@@ -639,8 +606,6 @@
       state.boards[boardIdx][cellIdx] = mover;
 
       state.lastMove = { board: boardIdx, cell: cellIdx };
-      state.history = state.history || [];
-      state.history.push({ player: mover, board: boardIdx, cell: cellIdx });
 
       const result = checkWinner(state.boards[boardIdx]);
       if(result) state.boardWinner[boardIdx] = result;
@@ -664,29 +629,7 @@
       socket.emit('make_move', { roomId: currentRoomId, gameState: state });
     }
 
-    function renderHistory(){
-      const history = state.history || [];
-      historyBar.querySelectorAll('.history-chip').forEach(el => el.remove());
-
-      if(history.length === 0){
-        historyBar.classList.add('hidden');
-        return;
-      }
-      historyBar.classList.remove('hidden');
-
-      history.forEach((mv, i) => {
-        const chip = document.createElement('span');
-        const n = String(i + 1).padStart(2, '0');
-        chip.className = 'history-chip ' + mv.player.toLowerCase() + (i === history.length - 1 ? ' latest' : '');
-        chip.textContent = `${n} ${mv.player} Q${mv.board + 1}·${mv.cell + 1}`;
-        historyBar.appendChild(chip);
-      });
-
-      historyBar.scrollLeft = historyBar.scrollWidth;
-    }
-
     function render(){
-      state.history = state.history || [];
       const last = state.lastMove || null;
 
       if(state.gameOver){
@@ -761,8 +704,6 @@
 
         megaBoardEl.appendChild(miniEl);
       }
-
-      renderHistory();
     }
 
     initNetwork();
