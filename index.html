@@ -664,6 +664,27 @@
       socket.emit('make_move', { roomId: currentRoomId, gameState: state });
     }
 
+    function renderHistory(){
+      const history = state.history || [];
+      historyBar.querySelectorAll('.history-chip').forEach(el => el.remove());
+
+      if(history.length === 0){
+        historyBar.classList.add('hidden');
+        return;
+      }
+      historyBar.classList.remove('hidden');
+
+      history.forEach((mv, i) => {
+        const chip = document.createElement('span');
+        const n = String(i + 1).padStart(2, '0');
+        chip.className = 'history-chip ' + mv.player.toLowerCase() + (i === history.length - 1 ? ' latest' : '');
+        chip.textContent = `${n} ${mv.player} Q${mv.board + 1}·${mv.cell + 1}`;
+        historyBar.appendChild(chip);
+      });
+
+      historyBar.scrollLeft = historyBar.scrollWidth;
+    }
+
     function render(){
       state.history = state.history || [];
       const last = state.lastMove || null;
