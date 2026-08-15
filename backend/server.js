@@ -14,7 +14,7 @@ const io = new Server(server, {
     }
 });
 
-// teste
+// teste 2
 const rooms = new Map();
 
 function defaultGameState() {
