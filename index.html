@@ -464,8 +464,6 @@
       [0,4,8],[2,4,6]
     ];
 
-    // COLOQUE AQUI A URL DO SEU BACKEND APÓS FAZER O DEPLOY!
-    // Para testes locais utilize: "http://localhost:3000"
     const BACKEND_URL = "https://velhamax.onrender.com";
 
     const splash = document.getElementById('splash');
@@ -498,7 +496,6 @@
     let myRole = null;
     let state = null;
 
-    // ---------- Mascote: pixel-art de um X 5x5 ----------
     (function buildMascot(){
       const onCells = new Set([0,4,6,8,12,16,18,20,24]);
       for(let i = 0; i < 25; i++){
@@ -546,8 +543,6 @@
         const roomIdFromUrl = urlParams.get('room');
 
         if (roomIdFromUrl) {
-          // Quem entra por link fica na splash até o jogo começar,
-          // e cai direto no tabuleiro.
           splashSub.textContent = 'entrando na partida';
           socket.emit('join_room', roomIdFromUrl);
         } else {
@@ -617,8 +612,6 @@
       setTimeout(() => copyMsg.classList.add('hidden'), 2000);
     });
 
-    // Revanche: reseta o tabuleiro na MESMA sala, sem precisar reenviar link.
-    // Qualquer um dos dois jogadores pode iniciar; o servidor sincroniza os dois.
     rematchBtn.addEventListener('click', () => {
       rematchBtn.disabled = true;
       socket.emit('reset_game', currentRoomId);
@@ -669,28 +662,6 @@
 
       // Envia o movimento para o servidor
       socket.emit('make_move', { roomId: currentRoomId, gameState: state });
-    }
-
-    function renderHistory(){
-      const history = state.history || [];
-      // Remove chips antigos, mantém o label fixo
-      historyBar.querySelectorAll('.history-chip').forEach(el => el.remove());
-
-      if(history.length === 0){
-        historyBar.classList.add('hidden');
-        return;
-      }
-      historyBar.classList.remove('hidden');
-
-      history.forEach((mv, i) => {
-        const chip = document.createElement('span');
-        const n = String(i + 1).padStart(2, '0');
-        chip.className = 'history-chip ' + mv.player.toLowerCase() + (i === history.length - 1 ? ' latest' : '');
-        chip.textContent = `${n} ${mv.player} Q${mv.board + 1}·${mv.cell + 1}`;
-        historyBar.appendChild(chip);
-      });
-
-      historyBar.scrollLeft = historyBar.scrollWidth;
     }
 
     function render(){
